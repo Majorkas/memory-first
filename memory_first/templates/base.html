@@ -1,0 +1,43 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{% static 'css/output.css' %}" />
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {% if title %}
+        <title>Memory First - {{ title }}</title>
+    {% else %}
+        <title>Memory First</title>
+    {% endif %}
+</head>
+<body>
+    {% if messages %}
+        <div class="container mx-auto px-4 py-4">
+            {% for message in messages %}
+                <c-alert variant="{% if message.tags == 'error' %}destructive{% elif message.tags == 'success' %}default{% else %}default{% endif %}" class="mb-4">
+                    {{ message }}
+                </c-alert>
+            {% endfor %}
+        </div>
+    {% endif %}
+  <main class="flex-1">
+    {% block content%}{%endblock%}
+  </main>
+    <footer class="border-t py-6">
+      <div class="container mx-auto px-4 text-center text-muted-foreground text-sm">
+          <div class="flex justify-center items-center gap-4 mb-3">
+              <a target="_blank" rel="noopener noreferrer" href="https://alzheimer.ie/">
+                  <img src="{% static 'FP-Alz.jpg' %}" alt="Alzheimer Ireland" class="h-10 w-auto object-contain" />
+              </a>
+              <a target="_blank" rel="noopener noreferrer" href="https://dementiaireland.com/">
+                  <img src="{% static 'FP-D-IE.png' %}" alt="Dementia Ireland" class="h-10 w-auto object-contain" />
+              </a>
+          </div>
+          <p>&copy; 2026 Memory First. All rights reserved.</p>
+      </div>
+    </footer>
+
+</body>
