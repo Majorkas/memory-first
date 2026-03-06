@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 class CUserModelTests(TestCase):
+    # Tests the creation of the CUsers and all their helpers
     @classmethod
     def setUpTestData(cls):
           cls.carer = CUser.objects.create_user(username='C1', password='12345')
@@ -37,6 +38,7 @@ class CUserModelTests(TestCase):
         self.assertEqual(carer.get_patients()[0], patient)
 
 class AutoCreatedProfilesTests(TestCase):
+    # Tests the profile auto create and that users cant have multiple profiles created
     def test_patient_profile_is_created_for_patient_user(self):
         user = CUser.objects.create_user(
             username="patient_auto",
@@ -82,3 +84,29 @@ class AutoCreatedProfilesTests(TestCase):
 
         with self.assertRaises(IntegrityError):
             CarerProfile.objects.create(user=user)
+
+class ProfileValidationTests(TestCase):
+    #Checks the .clean() on the profile models
+    def test_patient_profile_clean_rejects_non_patient_user(self):
+        user = CUser.objects.create_user(
+            username="carer_for_patient_profile",
+            password="pass12345",
+            user_type=CUser.User_type.CARER,
+        )
+
+        profile = PatientProfile(user=user)
+
+        with self.assertRaises(ValidationError):
+            profile.clean()
+
+    def test_carer_profile_clean_rejects_non_carer_user(self):
+        user = CUser.objects.create_user(
+            username="patient_for_carer_profile",
+            password="pass12345",
+            user_type=CUser.User_type.PATIENT,
+        )
+
+        profile = CarerProfile(user=user)
+
+        with self.assertRaises(ValidationError):
+            profile.clean()
