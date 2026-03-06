@@ -1,8 +1,8 @@
-from django.test import TestCase, Client
-from django.urls import reverse
-from .models import CUser, PatientCarerRelationship
+from django.test import TestCase
+from .models import CUser, PatientCarerRelationship,PatientProfile,CarerProfile
+from django.core.exceptions import ValidationError
 
-class PostModelTests(TestCase):
+class CUserModelTests(TestCase):
     @classmethod
     def setUpTestData(cls):
           cls.carer = CUser.objects.create_user(username='C1', password='12345')
@@ -34,3 +34,29 @@ class PostModelTests(TestCase):
         self.assertEqual(carer.is_patient(), False)
         self.assertEqual(patient.get_carers()[0], carer)
         self.assertEqual(carer.get_patients()[0], patient)
+
+class AutoCreatedProfilesTests(TestCase):
+    def test_patient_profile_is_created_for_patient_user(self):
+        user = CUser.objects.create_user(
+            username="patient_auto",
+            password="pass12345",
+            user_type=CUser.User_type.PATIENT,
+        )
+
+
+        self.assertTrue(PatientProfile.objects.filter(user=user).exists())
+
+        profile = PatientProfile.objects.get(user=user)
+        self.assertEqual(str(profile), "PatientProfile(patient_auto)")
+
+    def test_carer_profile_is_auto_created_for_carer_user(self):
+        user = CUser.objects.create_user(
+            username="carer_auto",
+            password="pass12345",
+            user_type=CUser.User_type.CARER,
+        )
+
+        self.assertTrue(CarerProfile.objects.filter(user=user).exists())
+
+        profile = CarerProfile.objects.get(user=user)
+        self.assertEqual(str(profile), "CarerProfile(carer_auto)")
