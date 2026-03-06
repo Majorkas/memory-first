@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.exceptions import ValidationError
+from cloudinary.models import CloudinaryField
 
 
 class CUser(AbstractUser):
@@ -33,6 +34,14 @@ class CUser(AbstractUser):
             return CUser.objects.filter(carer_link__carer=self, carer_link__is_active=True)
 
 class PatientProfile(models.Model):
+    patient_profile_picture = CloudinaryField('image', blank=True, null=True, folder='patient_profile_pictures/', transformation={
+            'width': 200,
+            'height': 200,
+            'crop': 'fill',
+            'gravity': 'face',
+            'quality': 'auto',
+            'fetch_format': 'auto'
+        } )
     user = models.OneToOneField(CUser,on_delete=models.CASCADE,related_name='patient_profile',limit_choices_to={"user_type": CUser.User_type.PATIENT},)
     date_of_birth = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=255,null=True, blank=True)
@@ -49,6 +58,14 @@ class PatientProfile(models.Model):
         return f"PatientProfile({self.user.username})"
 
 class CarerProfile(models.Model):
+    carer_profile_picture = CloudinaryField('image', blank=True, null=True, folder='carer_profile_pictures/', transformation={
+            'width': 200,
+            'height': 200,
+            'crop': 'fill',
+            'gravity': 'face',
+            'quality': 'auto',
+            'fetch_format': 'auto'
+        } )
     user = models.OneToOneField(CUser,on_delete=models.CASCADE,related_name="carer_profile",limit_choices_to={"user_type": CUser.User_type.CARER},)
     employer = models.CharField(max_length=30, null=True, blank=True)
     phone = models.CharField(max_length=15, null=True, blank=True)
@@ -90,7 +107,12 @@ class PatientCarerRelationship(models.Model):
 
 
 class FamilyFriend(models.Model):
-    image = models.ImageField()
+    image = CloudinaryField('image', blank=True, null=True, folder='family_friend_pictures/', transformation={
+            'crop': 'fill',
+            'gravity': 'face',
+            'quality': 'auto',
+            'fetch_format': 'auto'
+        } )
     name = models.CharField(max_length=30)
     relationship = models.CharField(max_length=20, blank=True)
     patient_profile = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='family_friend')
