@@ -32,6 +32,40 @@ class CUser(AbstractUser):
         else:
             return CUser.objects.filter(carer_link__carer=self, carer_link__is_active=True)
 
+class PatientProfile(models.Model):
+    user = models.OneToOneField(CUser,on_delete=models.CASCADE,related_name='patient_profile',limit_choices_to={"user_type": CUser.User_type.PATIENT},)
+    date_of_birth = models.DateField(null=True, blank=True)
+    address = models.CharField(max_length=255,null=True, blank=True)
+
+    def clean(self):
+        if self.user and not self.user.is_patient():
+            raise ValidationError("PatientProfile.user must be a patient user.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"PatientProfile({self.user.username})"
+
+class CarerProfile(models.Model):
+    user = models.OneToOneField(CUser,on_delete=models.CASCADE,related_name="carer_profile",limit_choices_to={"user_type": CUser.User_type.CARER},)
+    employer = models.CharField(max_length=30, null=True, blank=True)
+    phone = models.CharField(max_length=15, null=True, blank=True)
+
+    def clean(self):
+        if self.user and not self.user.is_carer():
+            raise ValidationError("CarerProfile.user must be a carer user.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"CarerProfile({self.user.username})"
+
+
+
 class PatientCarerRelationship(models.Model):
     patient = models.ForeignKey(CUser, on_delete=models.CASCADE, related_name='carer_link')
     carer = models.ForeignKey(CUser, on_delete=models.CASCADE, related_name='patient_link', limit_choices_to={'user_type__in' : ['carer']})
@@ -53,3 +87,14 @@ class PatientCarerRelationship(models.Model):
 
     def __str__(self):
         return f'{self.carer.username} cares for {self.patient.username}'
+
+
+class FamilyFriend(models.Model):
+    image = models.ImageField()
+    name = models.CharField(max_length=30)
+    relationship = models.CharField(max_length=20, blank=True)
+    patient_profile = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='family_friend')
+    emergency_contact = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.name} ({self.relationship}) for {self.patient_profile.user.username}"
