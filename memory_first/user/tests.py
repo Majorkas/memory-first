@@ -1,6 +1,7 @@
 from django.test import TestCase
 from .models import CUser, PatientCarerRelationship,PatientProfile,CarerProfile
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 class CUserModelTests(TestCase):
     @classmethod
@@ -60,3 +61,24 @@ class AutoCreatedProfilesTests(TestCase):
 
         profile = CarerProfile.objects.get(user=user)
         self.assertEqual(str(profile), "CarerProfile(carer_auto)")
+
+    def test_cannot_create_second_patient_profile_for_same_user(self):
+        user = CUser.objects.create_user(
+            username="patient_dup",
+            password="pass12345",
+            user_type=CUser.User_type.PATIENT,
+        )
+
+
+        with self.assertRaises(IntegrityError):
+            PatientProfile.objects.create(user=user)
+
+    def test_cannot_create_second_carer_profile_for_same_user(self):
+        user = CUser.objects.create_user(
+            username="carer_dup",
+            password="pass12345",
+            user_type=CUser.User_type.CARER,
+        )
+
+        with self.assertRaises(IntegrityError):
+            CarerProfile.objects.create(user=user)
