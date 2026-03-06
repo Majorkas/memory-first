@@ -38,13 +38,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'user.apps.UserConfig',
 
     "django_cotton",
 
     "allauth",
     "allauth.account",
 
-    "user",
+
     "memory",
 ]
 
@@ -145,6 +146,7 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_LOGOUT_ON_GET = False
 ACCOUNT_SIGNUP_EMAIL_ENTER_TWICE = False
+ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
