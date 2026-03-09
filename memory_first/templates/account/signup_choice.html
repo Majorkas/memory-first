@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sign Up Choice" %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4">
+    <c-card class="w-full max-w-xl">
+        <c-card.header>
+            <c-card.title>{% trans "Choose account type" %}</c-card.title>
+            <c-card.description>{% trans "Select how you want to continue." %}</c-card.description>
+        </c-card.header>
+
+        <c-card.content class="space-y-4">
+            <a href="{% url 'carer_signup' %}" class="block">
+                <c-button class="w-full py-6 text-lg">
+                    {% trans "Carer" %}
+                </c-button>
+            </a>
+
+            <c-alert-dialog>
+                <c-button variant="outline" class="w-full py-6 text-lg">
+                    <c-alert-dialog.trigger>{% trans "Patient" %}</c-alert-dialog.trigger>
+                </c-button>
+
+                <c-alert-dialog.content>
+                    <c-alert-dialog.header>
+                        <c-alert-dialog.title>{% trans "Patient Sign Up" %}</c-alert-dialog.title>
+                        <c-alert-dialog.description>
+                            {% trans "Please Contact your registered Carer to create an Account" %}
+                        </c-alert-dialog.description>
+                    </c-alert-dialog.header>
+
+                    <c-alert-dialog.footer>
+                        <c-alert-dialog.cancel>{% trans "Close" %}</c-alert-dialog.cancel>
+                    </c-alert-dialog.footer>
+                </c-alert-dialog.content>
+            </c-alert-dialog>
+        </c-card.content>
+    </c-card>
+</div>
+{% endblock %}
