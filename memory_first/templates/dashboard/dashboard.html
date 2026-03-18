@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block hero %}{% endblock %}
+{%block page_messages%} {%endblock%}
+
+{% block title %}{% trans "Dashboard" %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-background px-4 py-6">
+    <c-card class="mx-auto w-full max-w-6xl">
+        <c-card.header>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <c-card.title>{% trans "Dashboard" %}</c-card.title>
+
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 w-full sm:w-auto">
+                    {% if is_carer %}
+                        <c-dialog>
+                            <c-dialog.trigger asChild>
+                                    {% trans "Edit My Profile" %}
+                            </c-dialog.trigger>
+
+                            <c-dialog.content>
+                                <c-dialog.header>
+                                    <c-dialog.title>{% trans "Edit Carer Profile" %}</c-dialog.title>
+                                    <c-dialog.description>{% trans "Update your carer profile details." %}</c-dialog.description>
+                                </c-dialog.header>
+
+                                <form method="post" enctype="multipart/form-data" class="space-y-4">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="edit_carer_profile">
+
+                                    <div class="space-y-2">
+                                        <c-label for="employer">{% trans "Employer" %}</c-label>
+                                        <c-input type="text" name="employer" id="employer" value="{{ carer_profile.employer|default:'' }}" />
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <c-label for="phone">{% trans "Phone" %}</c-label>
+                                        <c-input type="text" name="phone" id="phone" value="{{ carer_profile.phone|default:'' }}" />
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <c-label for="carer_profile_picture">{% trans "Profile picture" %}</c-label>
+                                        <c-input type="file" name="carer_profile_picture" id="carer_profile_picture" />
+                                    </div>
+
+                                    {% if edit_carer_profile_errors %}
+                                        <div class="text-destructive text-sm">{{ edit_carer_profile_errors }}</div>
+                                    {% endif %}
+
+                                    <c-button type="submit" class="w-full">{% trans "Save Changes" %}</c-button>
+                                </form>
+                            </c-dialog.content>
+                        </c-dialog>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'account_logout' %}" class="w-full sm:w-auto">
+                        {% csrf_token %}
+                        <c-button type="submit" variant="outline" class="w-full sm:w-auto">
+                            {% trans "Logout" %}
+                        </c-button>
+                    </form>
+                </div>
+            </div>
+            <c-card.description>
+                {% if is_patient %}
+                    {% trans "Patient profile and care details" %}
+                {% elif is_carer %}
+                    {% trans "Carer overview and patient management" %}
+                {% else %}
+                    {% trans "User dashboard" %}
+                {% endif %}
+            </c-card.description>
+    {% if messages %}
+            <div class="container mx-auto px-4 py-4">
+                {% for message in messages %}
+                    <c-alert variant="{% if message.tags == 'error' %}destructive{% elif message.tags == 'success' %}default{% else %}default{% endif %}" class="mb-4">
+                        {{ message }}
+                    </c-alert>
+                {% endfor %}
+            </div>
+
+    {% endif %}
+        </c-card.header>
+
+        <c-card.content>
+            {% if is_patient %}
+                <c-tabs default_value="family_friends">
+                    <c-tabs.list class="grid w-full grid-cols-3">
+                        <c-tabs.trigger value="family_friends">{% trans "Family & Friends" %}</c-tabs.trigger>
+                        <c-tabs.trigger value="carer_profile">{% trans "Carer" %}</c-tabs.trigger>
+                        <c-tabs.trigger value="patient_profile">{% trans "My Profile" %}</c-tabs.trigger>
+                    </c-tabs.list>
+
+                    <c-tabs.content value="family_friends" class="mt-6">
+                        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {% for person in family_friends_page %}
+                                <c-card>
+                                    <c-card.header>
+                                      {% if person.image %}
+                                          <div class="h-48 w-full rounded-md bg-muted flex items-center justify-center overflow-hidden">
+                                              <img
+                                                  src="{{ person.image.url }}"
+                                                  alt="{{ person.name }}"
+                                                  class="h-full w-full object-contain object-center"
+                                              >
+                                          </div>
+                                        {% endif %}
+
+                                    </c-card.header>
+                                    <c-card.content class="space-y-3">
+                                        <c-card.title>{{ person.name }}</c-card.title>
+                                        <c-card.description>{{ person.relationship }}</c-card.description>
+                                        {% if person.emergency_contact %}
+                                            <p class="text-sm font-medium text-primary">{% trans "Emergency Contact" %}</p>
+                                        {% endif %}
+                                    </c-card.content>
+                                </c-card>
+                            {% empty %}
+                                <p class="text-sm text-muted-foreground">{% trans "No family or friends added yet." %}</p>
+                            {% endfor %}
+                        </div>
+
+                        {% if family_friends_page and family_friends_page.paginator.num_pages > 1 %}
+                            <div class="mt-6 flex items-center justify-center gap-3">
+                                {% if family_friends_page.has_previous %}
+                                    <a href="?ff_page={{ family_friends_page.previous_page_number }}">
+                                        <c-button variant="outline">{% trans "Previous" %}</c-button>
+                                    </a>
+                                {% endif %}
+
+                                <span class="text-sm text-muted-foreground">
+                                    {% blocktrans with current=family_friends_page.number total=family_friends_page.paginator.num_pages %}
+                                        Page {{ current }} of {{ total }}
+                                    {% endblocktrans %}
+                                </span>
+
+                                {% if family_friends_page.has_next %}
+                                    <a href="?ff_page={{ family_friends_page.next_page_number }}">
+                                        <c-button variant="outline">{% trans "Next" %}</c-button>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </c-tabs.content>
+
+                    <c-tabs.content value="carer_profile" class="mt-6 space-y-4">
+                        {% for carer in carers %}
+                            <c-card>
+                                <c-card.header>
+                                    <c-card.title>{{ carer.get_full_name|default:carer.username }}</c-card.title>
+                                    <c-card.description>{% trans "Assigned Carer" %}</c-card.description>
+                                </c-card.header>
+                                <c-card.content class="space-y-3">
+                                    {% if carer.carer_profile.carer_profile_picture %}
+                                        <img src="{{ carer.carer_profile.carer_profile_picture.url }}" alt="{{ carer.username }}" class="h-40 w-40 rounded-md object-cover">
+                                    {% endif %}
+                                    <p><strong>{% trans "Email" %}:</strong> {{ carer.email|default:"-" }}</p>
+                                    <p><strong>{% trans "Employer" %}:</strong> {{ carer.carer_profile.employer|default:"-" }}</p>
+                                    <p>
+                                        <strong>{% trans "Phone" %}:</strong>
+                                        {% if carer.carer_profile.phone %}
+                                            <a href="tel:{{ carer.carer_profile.phone }}" class="underline underline-offset-2">
+                                                {{ carer.carer_profile.phone }}
+                                            </a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </p>
+                                </c-card.content>
+                            </c-card>
+                        {% empty %}
+                            <p class="text-sm text-muted-foreground">{% trans "No active carer assigned." %}</p>
+                        {% endfor %}
+                    </c-tabs.content>
+
+                    <c-tabs.content value="patient_profile" class="mt-6">
+                        {% if patient_profile %}
+                            <c-card>
+                                <c-card.header>
+                                    <c-card.title>{% trans "My Profile" %}</c-card.title>
+                                    <c-card.description>{% trans "Your saved profile information" %}</c-card.description>
+                                </c-card.header>
+
+                                <c-card.content>
+                                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+                                        <div class="h-20 w-20 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                                            {% if patient_profile.patient_profile_picture %}
+                                                <img
+                                                    src="{{ patient_profile.patient_profile_picture.url }}"
+                                                    alt="{% trans 'Profile picture' %}"
+                                                    class="h-full w-full object-cover object-center"
+                                                >
+                                            {% else %}
+                                                <span class="text-xs text-muted-foreground">{% trans "No image" %}</span>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="space-y-1">
+                                            <p><strong>{% trans "Date of birth" %}:</strong> {{ patient_profile.date_of_birth|date:"D, d-M-Y"|default:"-" }}</p>
+                                            <p><strong>{% trans "Address" %}:</strong> {{ patient_profile.address|default:"-" }}</p>
+                                        </div>
+                                    </div>
+                                </c-card.content>
+                            </c-card>
+                        {% else %}
+                            <p class="text-sm text-muted-foreground">{% trans "No profile information available." %}</p>
+                        {% endif %}
+                    </c-tabs.content>
+                </c-tabs>
+
+            {% elif is_carer %}
+                <c-tabs default_value="patients">
+                    <c-tabs.list class="grid w-full grid-cols-3">
+                        <c-tabs.trigger value="patients">{% trans "Patients" %}</c-tabs.trigger>
+                        <c-tabs.trigger value="coming_soon">{% trans "Tab 2" %}</c-tabs.trigger>
+                        <c-tabs.trigger value="create_patient">{% trans "Create Patient" %}</c-tabs.trigger>
+                    </c-tabs.list>
+
+                    <c-tabs.content value="patients" class="mt-6">
+                        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {% for patient in patients %}
+                                <c-card>
+                                    <c-card.header>
+                                        <c-card.title>{{ patient.get_full_name|default:patient.username }}</c-card.title>
+                                        <c-card.description>{% trans "Patient" %}</c-card.description>
+                                    </c-card.header>
+                                    <c-card.content class="space-y-3">
+                                        {% if patient.patient_profile.patient_profile_picture %}
+                                          <div class="h-48 w-full rounded-md bg-muted flex items-center justify-center overflow-hidden">
+                                              <img
+                                                  src="{{ patient.patient_profile.patient_profile_picture.url }}"
+                                                  alt="{{ patient.username }}"
+                                                  class="h-full w-full object-contain object-center"
+                                              >
+                                          </div>
+                                        {% endif %}
+                                        <p><strong>{% trans "Email" %}:</strong> {{ patient.email|default:"-" }}</p>
+                                        <p><strong>{% trans "Date of birth" %}:</strong> {{ patient.patient_profile.date_of_birth|date:"D, d-M-Y"|default:"-" }}</p>
+                                        <p><strong>{% trans "Address" %}:</strong> {{ patient.patient_profile.address|default:"-" }}</p>
+                                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
+                                            <c-dialog>
+                                                <c-dialog.trigger>
+                                                        {% trans "Edit Profile" %}
+                                                </c-dialog.trigger>
+
+                                                <c-dialog.content>
+                                                    <c-dialog.header>
+                                                        <c-dialog.title>{% trans "Edit Patient Profile" %}</c-dialog.title>
+                                                        <c-dialog.description>
+                                                            {% trans "Update this patient's profile details." %}
+                                                        </c-dialog.description>
+                                                    </c-dialog.header>
+
+                                                    <form method="post" enctype="multipart/form-data" class="space-y-4">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="edit_patient_profile">
+                                                        <input type="hidden" name="patient_id" value="{{ patient.id }}">
+
+                                                        <div class="space-y-2">
+                                                            <c-label for="date_of_birth_{{ patient.id }}">{% trans "Date of birth" %}</c-label>
+                                                            <c-input
+                                                                type="date"
+                                                                name="date_of_birth"
+                                                                id="date_of_birth_{{ patient.id }}"
+                                                                value="{{ patient.patient_profile.date_of_birth|date:'Y-m-d' }}"
+                                                            />
+                                                        </div>
+
+                                                        <div class="space-y-2">
+                                                            <c-label for="address_{{ patient.id }}">{% trans "Address" %}</c-label>
+                                                            <c-input
+                                                                type="text"
+                                                                name="address"
+                                                                id="address_{{ patient.id }}"
+                                                                value="{{ patient.patient_profile.address|default:'' }}"
+                                                            />
+                                                        </div>
+
+                                                        <div class="space-y-2">
+                                                            <c-label for="patient_profile_picture_{{ patient.id }}">{% trans "Profile picture" %}</c-label>
+                                                            <c-input
+                                                                type="file"
+                                                                name="patient_profile_picture"
+                                                                id="patient_profile_picture_{{ patient.id }}"
+                                                            />
+                                                        </div>
+
+                                                        {% if edit_patient_profile_errors_for_id == patient.id %}
+                                                            <div class="text-destructive text-sm">{{ edit_patient_profile_errors }}</div>
+                                                        {% endif %}
+
+                                                        <c-button type="submit" class="w-full">{% trans "Save Changes" %}</c-button>
+                                                    </form>
+                                                </c-dialog.content>
+                                            </c-dialog>
+
+                                            <a href="{% url 'carer_patient_detail' patient.id %}" class="inline-block">
+                                                <c-button variant="secondary" type="button">
+                                                    {% trans "Details" %}
+                                                </c-button>
+                                            </a>
+                                        </div>
+                                    </c-card.content>
+                                </c-card>
+                            {% empty %}
+                                <p class="text-sm text-muted-foreground">{% trans "No linked patients yet." %}</p>
+                            {% endfor %}
+                        </div>
+                    </c-tabs.content>
+
+                    <c-tabs.content value="coming_soon" class="mt-6">
+                        <p class="text-sm text-muted-foreground">{% trans "This section will be added later." %}</p>
+                    </c-tabs.content>
+
+                    <c-tabs.content value="create_patient" class="mt-6">
+                      <form method="post">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="create_patient">
+
+                          <div class="space-y-4">
+                              {% if create_patient_form.non_field_errors %}
+                                  <c-alert variant="destructive">
+                                      <c-alert.description>
+                                          {{ create_patient_form.non_field_errors }}
+                                      </c-alert.description>
+                                  </c-alert>
+                              {% endif %}
+
+                              <div class="space-y-2">
+                                  <c-label for="{{ create_patient_form.username.id_for_label }}">
+                                      {{ create_patient_form.username.label }}
+                                  </c-label>
+                                  <c-input
+                                      type="text"
+                                      name="{{ create_patient_form.username.name }}"
+                                      id="{{ create_patient_form.username.id_for_label }}"
+                                      placeholder="Choose a username"
+                                      value="{{ create_patient_form.username.value|default:'' }}"
+                                      {{ create_patient_form.username.field.required|yesno:'required,' }}
+                                      class="{{ create_patient_form.username.errors|yesno:'border-destructive,' }}"
+                                  />
+                                  {% if create_patient_form.username.errors %}
+                                      <div class="text-destructive text-xs">
+                                          {{ create_patient_form.username.errors }}
+                                      </div>
+                                  {% endif %}
+                              </div>
+
+                              <div class="space-y-2">
+                                  <c-label for="{{ create_patient_form.email.id_for_label }}">
+                                      {{ create_patient_form.email.label }}
+                                  </c-label>
+                                  <c-input
+                                      type="email"
+                                      name="{{ create_patient_form.email.name }}"
+                                      id="{{ create_patient_form.email.id_for_label }}"
+                                      placeholder="Enter patient email"
+                                      value="{{ create_patient_form.email.value|default:'' }}"
+                                      {{ create_patient_form.email.field.required|yesno:'required,' }}
+                                      class="{{ create_patient_form.email.errors|yesno:'border-destructive,' }}"
+                                  />
+                                  {% if create_patient_form.email.errors %}
+                                      <div class="text-destructive text-xs">
+                                          {{ create_patient_form.email.errors }}
+                                      </div>
+                                  {% endif %}
+                              </div>
+
+                              <div class="space-y-2">
+                                  <c-label for="{{ create_patient_form.password1.id_for_label }}">
+                                      {{ create_patient_form.password1.label }}
+                                  </c-label>
+                                  <c-input
+                                      type="password"
+                                      name="{{ create_patient_form.password1.name }}"
+                                      id="{{ create_patient_form.password1.id_for_label }}"
+                                      placeholder="Create a password"
+                                      {{ create_patient_form.password1.field.required|yesno:'required,' }}
+                                      class="{{ create_patient_form.password1.errors|yesno:'border-destructive,' }}"
+                                  />
+                                  {% if create_patient_form.password1.errors %}
+                                      <div class="text-destructive text-xs">
+                                          {{ create_patient_form.password1.errors }}
+                                      </div>
+                                  {% endif %}
+                              </div>
+
+                              <div class="space-y-2">
+                                  <c-label for="{{ create_patient_form.password2.id_for_label }}">
+                                      {{ create_patient_form.password2.label }}
+                                  </c-label>
+                                  <c-input
+                                      type="password"
+                                      name="{{ create_patient_form.password2.name }}"
+                                      id="{{ create_patient_form.password2.id_for_label }}"
+                                      placeholder="Confirm password"
+                                      {{ create_patient_form.password2.field.required|yesno:'required,' }}
+                                      class="{{ create_patient_form.password2.errors|yesno:'border-destructive,' }}"
+                                  />
+                                  {% if create_patient_form.password2.errors %}
+                                      <div class="text-destructive text-xs">
+                                          {{ create_patient_form.password2.errors }}
+                                      </div>
+                                  {% endif %}
+                              </div>
+
+                              <c-button type="submit" class="w-full">
+                                  {% trans "Create Patient User" %}
+                              </c-button>
+                          </div>
+                      </form>
+                  </c-tabs.content>
+                </c-tabs>
+
+            {% else %}
+                <p class="text-sm text-muted-foreground">{% trans "No dashboard available for this account type." %}</p>
+            {% endif %}
+        </c-card.content>
+    </c-card>
+</div>
+{% endblock %}
