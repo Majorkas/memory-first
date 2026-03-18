@@ -16,9 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('user.urls'))
+    path('', include('user.urls')),
+    #Redirect straight to login screen when coming to the site env var sets the redirect to permanent when debug is False
+    path("", RedirectView.as_view(pattern_name="account_login", permanent=os.environ.get('DEBUG') == 'FALSE')),
 
 ]
