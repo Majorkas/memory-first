@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block hero %}{% endblock %}
+{% block page_messages %}{% endblock %}
+
+{% block title %}{{ patient.get_full_name|default:patient.username }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-background px-4 py-6">
+    <c-card class="mx-auto w-full max-w-5xl">
+        <c-card.header>
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <c-card.title>{{ patient.get_full_name|default:patient.username }}</c-card.title>
+                    <c-card.description>{% trans "Patient details and family/friends" %}</c-card.description>
+                </div>
+
+                <a href="{% url 'dashboard' %}" class="shrink-0">
+                    <c-button type="button" variant="outline">
+                        {% trans "Back to Dashboard" %}
+                    </c-button>
+                </a>
+            </div>
+        </c-card.header>
+
+        <c-card.content class="space-y-8">
+            <section>
+                <h3 class="text-lg font-semibold mb-3">{% trans "Family & Friends" %}</h3>
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {% for person in family_friends %}
+                        <c-card>
+                            <c-card.header>
+                                <c-card.title>{{ person.name }}</c-card.title>
+
+                                <div class="flex items-center gap-2">
+                                    <c-card.description>{{ person.relationship }}</c-card.description>
+                                    {% if person.emergency_contact %}
+                                        <c-badge variant="destructive">
+                                            {% trans "Emergency Contact" %}
+                                        </c-badge>
+                                    {% endif %}
+                                </div>
+                            </c-card.header>
+
+                            <c-card.content class="space-y-3">
+                                {% if person.image %}
+                                    <div class="h-40 w-full rounded-md bg-muted flex items-center justify-center overflow-hidden">
+                                        <img src="{{ person.image.url }}" alt="{{ person.name }}" class="h-full w-full object-contain object-center">
+                                    </div>
+                                {% endif %}
+                            <div class="flex gap-2">
+                                <c-dialog>
+                                        <c-dialog.trigger>
+                                            {% trans "Edit" %}
+                                        </c-dialog.trigger>
+                                        <c-dialog.content>
+                                            <c-dialog.header>
+                                                <c-dialog.title>{% trans "Edit Family/Friend" %}</c-dialog.title>
+                                            </c-dialog.header>
+
+                                            <form method="post" enctype="multipart/form-data" class="space-y-3">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="edit_family_friend">
+                                                <input type="hidden" name="family_friend_id" value="{{ person.id }}">
+
+                                                <div class="space-y-1">
+                                                    <c-label for="name_{{ person.id }}">{% trans "Name" %}</c-label>
+                                                    <input id="name_{{ person.id }}" name="name" type="text" value="{{ person.name }}" class="w-full rounded-md border px-3 py-2">
+                                                </div>
+
+                                                <div class="space-y-1">
+                                                    <c-label for="relationship_{{ person.id }}">{% trans "Relationship" %}</c-label>
+                                                    <input id="relationship_{{ person.id }}" name="relationship" type="text" value="{{ person.relationship }}" class="w-full rounded-md border px-3 py-2">
+                                                </div>
+
+                                                <div class="space-y-1">
+                                                    <c-label for="phone_number_{{ person.id }}">{% trans "Phone number" %}</c-label>
+                                                    <input id="phone_number_{{ person.id }}" name="phone_number" type="text" value="{{ person.phone_number|default:'' }}" class="w-full rounded-md border px-3 py-2">
+                                                </div>
+
+                                                <div class="space-y-1">
+                                                    <c-label for="email_{{ person.id }}">{% trans "Email" %}</c-label>
+                                                    <input id="email_{{ person.id }}" name="email" type="email" value="{{ person.email|default:'' }}" class="w-full rounded-md border px-3 py-2">
+                                                </div>
+
+                                                <div class="space-y-1">
+                                                    <c-label for="image_{{ person.id }}">{% trans "Image" %}</c-label>
+                                                    <input id="image_{{ person.id }}" name="image" type="file" class="w-full rounded-md border px-3 py-2">
+                                                </div>
+
+                                                <div class="flex items-center gap-2">
+                                                    <input id="emergency_contact_{{ person.id }}" name="emergency_contact" type="checkbox" {% if person.emergency_contact %}checked{% endif %}>
+                                                    <c-label for="emergency_contact_{{ person.id }}">{% trans "Emergency contact" %}</c-label>
+                                                </div>
+
+                                                {% if edit_form_errors_for_id == person.id %}
+                                                    <div class="text-destructive text-sm">
+                                                        {{ edit_form_errors }}
+                                                    </div>
+                                                {% endif %}
+
+                                                <c-button type="submit">{% trans "Save changes" %}</c-button>
+                                            </form>
+                                        </c-dialog.content>
+                                </c-dialog>
+
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_family_friend">
+                                    <input type="hidden" name="family_friend_id" value="{{ person.id }}">
+                                    <c-button type="submit" variant="destructive">
+                                        {% trans "Remove" %}
+                                    </c-button>
+                                </form>
+                              </div>
+                            </c-card.content>
+                        </c-card>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section>
+                <h3 class="text-lg font-semibold mb-3">{% trans "Add Family/Friend" %}</h3>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_family_friend">
+
+                    <div class="space-y-4">
+                        {% if family_friend_form.non_field_errors %}
+                            <c-alert variant="destructive">
+                                <c-alert.description>{{ family_friend_form.non_field_errors }}</c-alert.description>
+                            </c-alert>
+                        {% endif %}
+
+                        <div class="space-y-2">
+                            <c-label for="{{ family_friend_form.name.id_for_label }}">{{ family_friend_form.name.label }}</c-label>
+                            <c-input
+                                type="text"
+                                name="{{ family_friend_form.name.name }}"
+                                id="{{ family_friend_form.name.id_for_label }}"
+                                value="{{ family_friend_form.name.value|default:'' }}"
+                                placeholder="{% trans 'Full name' %}"
+                            />
+                            {% if family_friend_form.name.errors %}
+                                <p class="text-destructive text-xs">{{ family_friend_form.name.errors }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-2">
+                            <c-label for="{{ family_friend_form.relationship.id_for_label }}">{{ family_friend_form.relationship.label }}</c-label>
+                            <c-input
+                                type="text"
+                                name="{{ family_friend_form.relationship.name }}"
+                                id="{{ family_friend_form.relationship.id_for_label }}"
+                                value="{{ family_friend_form.relationship.value|default:'' }}"
+                                placeholder="{% trans 'Relationship' %}"
+                            />
+                            {% if family_friend_form.relationship.errors %}
+                                <p class="text-destructive text-xs">{{ family_friend_form.relationship.errors }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="pt-1">
+                            <p class="text-sm font-medium text-foreground">{% trans "Contact details" %}</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <c-label for="{{ family_friend_form.phone_number.id_for_label }}">{{ family_friend_form.phone_number.label }}</c-label>
+                            <c-input
+                                type="text"
+                                name="{{ family_friend_form.phone_number.name }}"
+                                id="{{ family_friend_form.phone_number.id_for_label }}"
+                                value="{{ family_friend_form.phone_number.value|default:'' }}"
+                                placeholder="{% trans 'Phone number' %}"
+                            />
+                            {% if family_friend_form.phone_number.errors %}
+                                <p class="text-destructive text-xs">{{ family_friend_form.phone_number.errors }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-2">
+                            <c-label for="{{ family_friend_form.email.id_for_label }}">{{ family_friend_form.email.label }}</c-label>
+                            <c-input
+                                type="email"
+                                name="{{ family_friend_form.email.name }}"
+                                id="{{ family_friend_form.email.id_for_label }}"
+                                value="{{ family_friend_form.email.value|default:'' }}"
+                                placeholder="{% trans 'Email address' %}"
+                            />
+                            {% if family_friend_form.email.errors %}
+                                <p class="text-destructive text-xs">{{ family_friend_form.email.errors }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-2">
+                            <c-label for="{{ family_friend_form.image.id_for_label }}">{{ family_friend_form.image.label }}</c-label>
+                            <c-input
+                                type="file"
+                                name="{{ family_friend_form.image.name }}"
+                                id="{{ family_friend_form.image.id_for_label }}"
+                            />
+                            {% if family_friend_form.image.errors %}
+                                <p class="text-destructive text-xs">{{ family_friend_form.image.errors }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                name="{{ family_friend_form.emergency_contact.name }}"
+                                id="{{ family_friend_form.emergency_contact.id_for_label }}"
+                                class="h-4 w-4 rounded border border-input"
+                                {% if family_friend_form.emergency_contact.value %}checked{% endif %}
+                            >
+                            <c-label for="{{ family_friend_form.emergency_contact.id_for_label }}">
+                                {{ family_friend_form.emergency_contact.label }}
+                            </c-label>
+                        </div>
+                        {% if family_friend_form.emergency_contact.errors %}
+                            <p class="text-destructive text-xs">{{ family_friend_form.emergency_contact.errors }}</p>
+                        {% endif %}
+
+                        <c-button type="submit" class="w-full">{% trans "Add Family/Friend" %}</c-button>
+                    </div>
+                </form>
+            </section>
+        </c-card.content>
+    </c-card>
+</div>
+{% endblock %}
