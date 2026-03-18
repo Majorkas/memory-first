@@ -14,6 +14,7 @@
     {% endif %}
 </head>
 <body>
+{% block hero %}
 <section class="relative h-[260px] md:h-[340px] overflow-hidden">
     <img
         src="{% static 'memory-first-hero.jpg' %}"
@@ -31,6 +32,8 @@
 
     <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white"></div>
 </section>
+{% endblock %}
+{%block page_messages%}
     {% if messages %}
         <div class="container mx-auto px-4 py-4">
             {% for message in messages %}
@@ -39,10 +42,13 @@
                 </c-alert>
             {% endfor %}
         </div>
+
     {% endif %}
+{%endblock%}
   <main class="flex-1">
     {% block content%}{%endblock%}
   </main>
+  {%block footer%}
     <footer class="border-t py-6 ">
       <div class="container mx-auto px-4 text-center text-muted-foreground text-sm">
           <div class="flex justify-center items-center gap-4 mb-3">
@@ -56,5 +62,6 @@
           <p>&copy; 2026 Memory First. All rights reserved.</p>
       </div>
     </footer>
+   {%endblock%}
 
 </body>
