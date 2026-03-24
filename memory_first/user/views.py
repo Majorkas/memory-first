@@ -1,4 +1,5 @@
 from allauth.account.views import SignupView
+from memory.models import MemoryGameAttempt
 from .models import CUser, PatientProfile, PatientCarerRelationship, FamilyFriend, CarerProfile
 from .forms import PatientSignupForm, CarerSignupForm, PatientProfileForm, CarerCreatesPatientUserForm, FamilyFriendForm, CarerProfileForm
 from django.db import transaction
@@ -8,6 +9,12 @@ from django.core.paginator import Paginator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Max, Q
+from datetime import timedelta
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.http import JsonResponse
+
 
 
 
@@ -20,6 +27,20 @@ class PatientSignupView(SignupView):
 class CarerSignupView(SignupView):
     #Signup View for a Carer Account
     form_class = CarerSignupForm
+
+class SnoozeMemoryReminderView(LoginRequiredMixin, View):
+    http_method_names = ["post"]
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_patient():
+            return JsonResponse({"detail": "Patients only."}, status=403)
+
+        request.session["memory_reminder_snooze_until"] = (
+            timezone.now() + timedelta(minutes=15)
+        ).isoformat()
+        request.session["memory_reminder_added"] = False
+
+        return JsonResponse({"ok": True})
 
 
 class DashboardView(LoginRequiredMixin, View):
@@ -91,6 +112,59 @@ class DashboardView(LoginRequiredMixin, View):
 
         return render(request, self.template_name, context)
 
+    def _build_carer_memory_rows(self, patients_qs, stats_range="today", selected_day=None):
+        #Function to help with building the rows for the Patient memory game stats
+        patient_user_ids = list(patients_qs.values_list("id", flat=True))
+        if not patient_user_ids:
+            return []
+        #Query all MemoryGameAttempts for the carers linked patients
+        qs = MemoryGameAttempt.objects.filter(patient_profile__user_id__in=patient_user_ids)
+        #For Filtering of the data on the template
+        today = timezone.localdate()
+        if stats_range == "today":
+            qs = qs.filter(answered_at__date=today)
+        elif stats_range == "week":
+            start_day = today - timedelta(days=6)
+            qs = qs.filter(answered_at__date__range=[start_day, today])
+        elif stats_range == "custom" and selected_day:
+            qs = qs.filter(answered_at__date=selected_day)
+        #Groups the attempts by Patient and calculates the summary
+        rows_qs = (
+            qs.values(
+                "patient_profile_id",
+                "patient_profile__user__username",
+                "patient_profile__user__first_name",
+                "patient_profile__user__last_name",
+            )
+            .annotate(
+                total=Count("id"),
+                correct=Count("id", filter=Q(is_correct=True)),
+                last_played=Max("answered_at"),
+            )
+            .order_by("-last_played")
+        )
+
+        rows = []
+        #finally builds all rows and gives correct badge depending on accuracy percentage
+        for row in rows_qs:
+            total = row["total"] or 0
+            correct = row["correct"] or 0
+            accuracy = round((correct / total) * 100, 1) if total else 0
+
+            if accuracy < 50:
+                accuracy_level = "danger"
+            elif accuracy < 75:
+                accuracy_level = "caution"
+            else:
+                accuracy_level = "ok"
+
+            row["accuracy"] = accuracy
+            row["accuracy_level"] = accuracy_level
+            rows.append(row)
+
+
+        return rows
+
     def _build_context(self, request):
         #Gathers information from the db for use on the templates
         user = request.user
@@ -102,9 +176,22 @@ class DashboardView(LoginRequiredMixin, View):
         patient_profile = None
         carers = []
         patients = []
+        carer_memory_rows = []
+        selected_stats_day_raw = request.GET.get("stats_day", "").strip()
+        selected_stats_day = parse_date(selected_stats_day_raw) if selected_stats_day_raw else None
+
+        stats_range = request.GET.get("stats_range", "today").strip().lower()
+        if stats_range not in {"today", "week", "custom"}:
+            stats_range = "today"
 
         is_patient = (str(user.user_type).lower() == "patient")
         is_carer = (str(user.user_type).lower() == "carer")
+
+        #Makes sure active tab stays on the memory stats tab when updating the filter
+        active_tab = request.GET.get("tab", "patients")
+        filter_changed = bool(request.GET.get("stats_range")) or bool(request.GET.get("stats_day"))
+        if is_carer and filter_changed:
+            active_tab = "memory"
 
         if is_patient:
             #checks if user is a patient and if so gathers all the patient related context and paginates the family friend context
@@ -123,6 +210,9 @@ class DashboardView(LoginRequiredMixin, View):
             carer_profile, _ = CarerProfile.objects.get_or_create(user=user)
             patients = user.get_patients().select_related("patient_profile").distinct()
             create_patient_form = CarerCreatesPatientUserForm()
+            carer_memory_rows = self._build_carer_memory_rows( patients_qs=patients,
+                stats_range=stats_range,
+                selected_day=selected_stats_day,)
 
         return {
             "is_patient": is_patient,
@@ -133,6 +223,8 @@ class DashboardView(LoginRequiredMixin, View):
             "patient_profile": patient_profile,
             "create_patient_form": create_patient_form,
             "carer_profile": carer_profile,
+            "carer_memory_rows": carer_memory_rows,
+            "active_tab": active_tab,
         }
 
 
