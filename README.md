@@ -12,7 +12,8 @@ This repo is a Django project with two primary apps:
 ---
 
 ## Contents
-
+- [Project Structure](#project-structure)
+- [SiteMap/Routemap](#sitemap--route-map)
 - [Tech stack](#tech-stack)
 - [Local development](#local-development)
 - [Deployment on Render (Native Environment)](#deployment-on-render-native-environment)
@@ -30,6 +31,7 @@ This repo is a Django project with two primary apps:
 - [API documentation](#api-documentation)
 - [Django Admin usage](#django-admin-usage)
 - [Troubleshooting (Render-focused)](#troubleshooting-render-focused)
+- [Seed User info](#seed-user-info)
 
 ---
 # Project structure
@@ -468,3 +470,25 @@ Fix:
 - Add an SMTP provider and configure Django email settings if you need password reset emails.
 
 ---
+
+# Seed User info
+Information for the seed users to test features 
+
+```code
+PATIENT_USER = {
+    "username": "David.Williams",
+    "password": "David.Williams",
+    "first_name": "David",
+    "last_name": "Williams",
+    "email": "startup_patient@example.com",
+    "user_type": CUser.User_type.PATIENT,
+}
+CARER_USER = {
+    "username": "Noah.Parker",
+    "password": "Noah.Parker",
+    "first_name": "Noah",
+    "last_name": "Parker",
+    "email": "startup_carer@example.com",
+    "user_type": CUser.User_type.CARER,
+}
+```
