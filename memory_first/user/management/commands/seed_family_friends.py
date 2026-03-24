@@ -6,6 +6,9 @@ from django.core.management.base import BaseCommand, CommandError
 
 from user.models import CUser, FamilyFriend, PatientProfile
 
+
+#startup command for adding family friends to the Patient user
+
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
 FAMILY_FRIENDS = [
