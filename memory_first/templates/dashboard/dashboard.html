@@ -71,16 +71,46 @@
                     {% trans "User dashboard" %}
                 {% endif %}
             </c-card.description>
-    {% if messages %}
-            <div class="container mx-auto px-4 py-4">
-                {% for message in messages %}
-                    <c-alert variant="{% if message.tags == 'error' %}destructive{% elif message.tags == 'success' %}default{% else %}default{% endif %}" class="mb-4">
-                        {{ message }}
-                    </c-alert>
-                {% endfor %}
-            </div>
+            {% if messages %}
+              {% for message in messages %}
+                {% if "memory_reminder" in message.tags %}
+                  <c-dialog default_open="true">
+                    <c-dialog.content>
+                      <c-dialog.header>
+                        <c-dialog.title>Memory Game Reminder</c-dialog.title>
+                        <c-dialog.description>{{ message }}</c-dialog.description>
+                      </c-dialog.header>
 
-    {% endif %}
+                      <c-dialog.footer>
+                        <c-button
+                          variant="outline"
+                          @click="
+                            fetch('{% url 'memory_reminder_snooze' %}', {
+                              method: 'POST',
+                              headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                              },
+                              credentials: 'same-origin'
+                            }).then(() => { open = false; })
+                          "
+                        >
+                          Remind me in 15 minutes
+                        </c-button>
+
+                        <c-button onclick="window.location.href='{% url 'memory_game_page' %}'">
+                          Play Now
+                        </c-button>
+                      </c-dialog.footer>
+                    </c-dialog.content>
+                  </c-dialog>
+                {% else %}
+                  <div class="rounded-lg border bg-card p-4 shadow-sm">
+                    <p class="text-sm font-medium">{{ message }}</p>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
         </c-card.header>
 
         <c-card.content>
@@ -210,10 +240,10 @@
                 </c-tabs>
 
             {% elif is_carer %}
-                <c-tabs default_value="patients">
+                <c-tabs default_value="{{ active_tab|default:'patients' }}">
                     <c-tabs.list class="grid w-full grid-cols-3">
                         <c-tabs.trigger value="patients">{% trans "Patients" %}</c-tabs.trigger>
-                        <c-tabs.trigger value="coming_soon">{% trans "Tab 2" %}</c-tabs.trigger>
+                        <c-tabs.trigger value="memory">{% trans "Memory Stats" %}</c-tabs.trigger>
                         <c-tabs.trigger value="create_patient">{% trans "Create Patient" %}</c-tabs.trigger>
                     </c-tabs.list>
 
@@ -309,8 +339,103 @@
                         </div>
                     </c-tabs.content>
 
-                    <c-tabs.content value="coming_soon" class="mt-6">
-                        <p class="text-sm text-muted-foreground">{% trans "This section will be added later." %}</p>
+                    <c-tabs.content value="memory" class="mt-6">
+                        <c-card>
+                            <c-card.header>
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                                    <div>
+                                        <c-card.title>{% trans "Memory Game Stats" %}</c-card.title>
+                                        <c-card.description>{% trans "Patient activity and accuracy" %}</c-card.description>
+                                    </div>
+
+                                    <form method="get" class="flex flex-wrap items-end gap-2">
+                                        <button
+                                            type="submit"
+                                            name="stats_range"
+                                            value="today"
+                                            class="h-10 rounded-md border px-3 text-sm {% if stats_range == 'today' %}bg-primary text-primary-foreground{% endif %}"
+                                        >
+                                            {% trans "Today" %}
+                                        </button>
+
+                                        <button
+                                            type="submit"
+                                            name="stats_range"
+                                            value="week"
+                                            class="h-10 rounded-md border px-3 text-sm {% if stats_range == 'week' %}bg-primary text-primary-foreground{% endif %}"
+                                        >
+                                            {% trans "Last 7 Days" %}
+                                        </button>
+
+                                        <input type="hidden" name="stats_range" value="custom" />
+                                        <input
+                                            id="stats_day"
+                                            name="stats_day"
+                                            type="date"
+                                            value="{{ selected_stats_day }}"
+                                            class="h-10 rounded-md border px-3 text-sm"
+                                        />
+                                        <button
+                                            type="submit"
+                                            class="h-10 rounded-md border px-3 text-sm {% if stats_range == 'custom' %}bg-primary text-primary-foreground{% endif %}"
+                                        >
+                                            {% trans "Custom Day" %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </c-card.header>
+
+                            <c-card.content>
+                                {% if carer_memory_rows %}
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-sm">
+                                            <thead>
+                                                <tr class="border-b">
+                                                    <th class="text-left py-2">{% trans "Patient" %}</th>
+                                                    <th class="text-left py-2">{% trans "Attempts" %}</th>
+                                                    <th class="text-left py-2">{% trans "Correct" %}</th>
+                                                    <th class="text-left py-2">{% trans "Accuracy" %}</th>
+                                                    <th class="text-left py-2">{% trans "Last Played" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for row in carer_memory_rows %}
+                                                    <tr class="border-b">
+                                                        <td class="py-2">
+                                                            {% if row.patient_profile__user__first_name or row.patient_profile__user__last_name %}
+                                                                {{ row.patient_profile__user__first_name }} {{ row.patient_profile__user__last_name }}
+                                                            {% else %}
+                                                                {{ row.patient_profile__user__username }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="py-2">{{ row.total }}</td>
+                                                        <td class="py-2">{{ row.correct }}</td>
+                                                        <td class="py-2">
+                                                          {% if row.accuracy_level == "danger" %}
+                                                            <c-badge variant="destructive">
+                                                              Danger {{ row.accuracy }}%
+                                                            </c-badge>
+                                                          {% elif row.accuracy_level == "caution" %}
+                                                            <c-badge variant="caution">
+                                                              Caution {{ row.accuracy }}%
+                                                            </c-badge>
+                                                          {% else %}
+                                                            <c-badge variant="secondary">
+                                                              {{ row.accuracy }}%
+                                                            </c-badge>
+                                                          {% endif %}
+                                                        </td>
+                                                        <td class="py-2">{{ row.last_played|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p class="text-sm text-muted-foreground">{% trans "No memory game stats yet." %}</p>
+                                {% endif %}
+                            </c-card.content>
+                        </c-card>
                     </c-tabs.content>
 
                     <c-tabs.content value="create_patient" class="mt-6">
