@@ -10,6 +10,7 @@
     {% elif variant == 'secondary' %}border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80
     {% elif variant == 'destructive' %}border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80
     {% elif variant == 'outline' %}text-foreground
+    {% elif variant == 'caution' %}border-yellow-300 bg-yellow-100 text-yellow-800
     {% endif %}
 
     {% if class %}
