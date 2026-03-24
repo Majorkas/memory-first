@@ -8,6 +8,7 @@ dependencies = [
     "django-allauth>=65.14.3",
     "django-cloudinary-storage>=0.3.0",
     "django-cotton>=2.6.1",
+    "djangorestframework>=3.16.1",
     "pillow>=12.1.1",
     "python-dotenv>=1.2.2",
     "whitenoise>=6.12.0",
