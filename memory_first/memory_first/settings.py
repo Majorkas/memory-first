@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
 
     "memory",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'user.middleware.MemoryGameReminderMiddleware',
 ]
 
 ROOT_URLCONF = 'memory_first.urls'
@@ -173,4 +175,14 @@ STORAGES = {
 
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
+}
+#DRF
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
 }
