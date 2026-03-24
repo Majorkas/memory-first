@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block hero %}{% endblock %}
+{% block page_messages %}{% endblock %}
+{% block title %}Memory Game{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-background px-4 py-6">
+  <c-card class="mx-auto w-full max-w-2xl">
+    <c-card.header>
+      <div class="flex items-center justify-between gap-3">
+        <c-card.title>Memory Game</c-card.title>
+        <c-card.description id="progress"></c-card.description>
+
+
+      </div>
+      <c-card.description>
+        Look at the photo and answer the question.
+      </c-card.description>
+    </c-card.header>
+
+    <c-card.content>
+      <div
+        id="memory-game"
+        data-question-url="{% url 'family_memory_question' %}"
+        data-submit-url="{% url 'family_memory_submit' %}"
+        data-dashboard-url="{% url 'dashboard' %}"
+        data-csrf-token="{{ csrf_token }}"
+        data-total-questions="{{ total_questions }}"
+        class="space-y-4"
+      >
+        <div class="h-56 w-full rounded-md bg-muted flex items-center justify-center overflow-hidden">
+          <img
+            id="ff-image"
+            alt="Family/Friend photo"
+            class="h-full w-full object-contain object-center"
+            onerror="console.error('Image failed to load:', this.src)"
+          >
+        </div>
+
+        <p id="q-text" class="text-base font-medium"></p>
+        <p id="result" class="text-sm text-muted-foreground"></p>
+
+        <div class="space-y-2">
+          <c-label id="answer-label" for="answer">Your answer</c-label>
+          <c-input id="answer" type="text" autocomplete="off" />
+        </div>
+
+        <c-button id="submit-btn" type="button" class="w-full">
+          Submit
+        </c-button>
+      </div>
+    </c-card.content>
+  </c-card>
+</div>
+
+  <script src="{% static 'scripts/game_script.js' %}"></script>
+{% endblock %}
