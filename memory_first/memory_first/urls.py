@@ -28,5 +28,5 @@ urlpatterns = [
     path('', include('user.urls')),
     #Redirect straight to login screen when coming to the site env var sets the redirect to permanent when debug is False
     path("", RedirectView.as_view(pattern_name="account_login", permanent=os.environ.get('DEBUG') == 'FALSE')),
-
+    path("", include('memory.urls')),
 ]
