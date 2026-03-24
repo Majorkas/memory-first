@@ -1,6 +1,6 @@
 from django.urls import path, include
 from django.views.generic import TemplateView
-from .views import CarerSignupView, PatientSignupView, DashboardView, CarerPatientDetailView
+from .views import CarerSignupView, PatientSignupView, DashboardView, CarerPatientDetailView, SnoozeMemoryReminderView
 
 urlpatterns = [
     path("accounts/signup/",TemplateView.as_view(template_name="account/signup_choice.html"),name="account_signup",),
@@ -9,4 +9,6 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path('dashboard/', DashboardView.as_view(), name="dashboard"),
     path("dashboard/patient/<int:patient_id>/", CarerPatientDetailView.as_view(), name="carer_patient_detail"),
+    path("memory-reminder/snooze/", SnoozeMemoryReminderView.as_view(), name="memory_reminder_snooze",
+    ),
 ]
