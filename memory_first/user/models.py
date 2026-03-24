@@ -120,3 +120,11 @@ class FamilyFriend(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.relationship}) for {self.patient_profile.user.username}"
+
+
+class SeedRunState(models.Model):
+    key = models.CharField(max_length=100, unique=True)
+    completed_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.key
