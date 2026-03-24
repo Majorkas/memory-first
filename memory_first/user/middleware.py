@@ -12,6 +12,14 @@ class MemoryGameReminderMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        excluded_prefixes = (
+            "/accounts/",
+            "/admin/",
+        )
+
+        if request.path.startswith(excluded_prefixes):
+            return self.get_response(request)
+
         if request.user.is_authenticated and request.user.is_patient():
             excluded_paths = {
                 reverse("memory_game_page"),
