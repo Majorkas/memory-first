@@ -21,6 +21,16 @@
                     </c-button>
                 </a>
             </div>
+            {% if messages %}
+            <div class="container mx-auto px-4 py-4">
+                {% for message in messages %}
+                    <c-alert variant="{% if message.tags == 'error' %}destructive{% elif message.tags == 'success' %}default{% else %}default{% endif %}" class="mb-4">
+                        {{ message }}
+                    </c-alert>
+                {% endfor %}
+            </div>
+
+    {% endif %}
         </c-card.header>
 
         <c-card.content class="space-y-8">
