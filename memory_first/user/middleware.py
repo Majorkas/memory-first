@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta, datetime
 
 from django.contrib import messages
@@ -6,6 +7,7 @@ from django.utils import timezone
 
 from memory.models import MemoryGameAttempt
 
+logger = logging.getLogger(__name__)
 
 class MemoryGameReminderMiddleware:
     def __init__(self, get_response):
@@ -63,6 +65,10 @@ class MemoryGameReminderMiddleware:
                             )
                             request.session["memory_reminder_added"] = True
                 except Exception:
-                    pass
+                    logger.exception(
+                        "MemoryGameReminderMiddleware failed for path=%s user_id=%s",
+                        request.path,
+                        getattr(request.user, "pk", None),
+                    )
 
         return self.get_response(request)
