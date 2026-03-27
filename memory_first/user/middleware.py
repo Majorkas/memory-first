@@ -35,7 +35,7 @@ class MemoryGameReminderMiddleware:
             except Exception as e:
                 print(f"[memory-mw] is_patient() failed: {e}", flush=True)
 
-        if request.user.is_authenticated and request.user.is_patient():
+        if request.user.is_authenticated and is_patient:
             excluded_paths = {
                 reverse("memory_game_page"),
                 reverse("family_memory_question"),
@@ -70,12 +70,7 @@ class MemoryGameReminderMiddleware:
                             snoozed = timezone.now() < snooze_until
 
                         if not snoozed and not request.session.get("memory_reminder_added", False):
-                            messages.info(
-                                request,
-                                "Don't forget to play the Memory Game today!",
-                                extra_tags="memory_reminder",
-                                fail_silently=True,
-                            )
+                            request.memory_reminder_text = "Don't forget to play the Memory Game today!"
                             request.session["memory_reminder_added"] = True
                 except Exception:
                     logger.exception(
@@ -85,5 +80,4 @@ class MemoryGameReminderMiddleware:
                     )
 
         response = self.get_response(request)
-        response["X-Memory-Middleware"] = "hit"
         return response

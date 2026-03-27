@@ -72,44 +72,11 @@
                 {% endif %}
             </c-card.description>
             {% if messages %}
-              {% for message in messages %}
-                {% if "memory_reminder" in message.tags %}
-                  <c-dialog default_open="true">
-                    <c-dialog.content>
-                      <c-dialog.header>
-                        <c-dialog.title>Memory Game Reminder</c-dialog.title>
-                        <c-dialog.description>{{ message }}</c-dialog.description>
-                      </c-dialog.header>
-
-                      <c-dialog.footer>
-                        <c-button
-                          variant="outline"
-                          @click="
-                            fetch('{% url 'memory_reminder_snooze' %}', {
-                              method: 'POST',
-                              headers: {
-                                'X-CSRFToken': '{{ csrf_token }}',
-                                'Content-Type': 'application/json'
-                              },
-                              credentials: 'same-origin'
-                            }).then(() => { open = false; })
-                          "
-                        >
-                          Remind me in 15 minutes
-                        </c-button>
-
-                        <c-button onclick="window.location.href='{% url 'memory_game_page' %}'">
-                          Play Now
-                        </c-button>
-                      </c-dialog.footer>
-                    </c-dialog.content>
-                  </c-dialog>
-                {% else %}
-                  <div class="rounded-lg border bg-card p-4 shadow-sm">
+                {% for message in messages %}
+                    <div class="rounded-lg border bg-card p-4 shadow-sm">
                     <p class="text-sm font-medium">{{ message }}</p>
-                  </div>
-                {% endif %}
-              {% endfor %}
+                    </div>
+                {% endfor %}
             {% endif %}
         </c-card.header>
 
