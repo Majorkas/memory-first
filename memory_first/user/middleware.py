@@ -7,6 +7,8 @@ from django.utils import timezone
 
 from memory.models import MemoryGameAttempt
 
+print("MIDDLEWARE MODULE LOADED", flush=True)
+
 logger = logging.getLogger(__name__)
 
 class MemoryGameReminderMiddleware:
