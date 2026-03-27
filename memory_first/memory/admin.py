@@ -1,3 +1,4 @@
 from django.contrib import admin
+from memory.models import MemoryGameAttempt
 
-# Register your models here.
+admin.site.register(MemoryGameAttempt)
