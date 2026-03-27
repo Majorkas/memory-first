@@ -212,7 +212,3 @@ LOGGING = {
         "level": "DEBUG",
     },
 }
-
-
-print("SETTINGS LOADED, DEBUG=", DEBUG, flush=True)
-print("MIDDLEWARE=", MIDDLEWARE, flush=True)

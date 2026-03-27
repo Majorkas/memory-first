@@ -15,38 +15,6 @@
     {% endif %}
 </head>
 <body>
-{% if request.memory_reminder_text %}
-  <c-dialog default_open="true">
-    <c-dialog.content>
-      <c-dialog.header>
-        <c-dialog.title>Memory Game Reminder</c-dialog.title>
-        <c-dialog.description>{{ request.memory_reminder_text }}</c-dialog.description>
-      </c-dialog.header>
-
-      <c-dialog.footer>
-        <c-button
-          variant="outline"
-          @click="
-            fetch('{% url 'memory_reminder_snooze' %}', {
-              method: 'POST',
-              headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-              },
-              credentials: 'same-origin'
-            }).then(() => { open = false; })
-          "
-        >
-          Remind me in 15 minutes
-        </c-button>
-
-        <c-button onclick="window.location.href='{% url 'memory_game_page' %}'">
-          Play Now
-        </c-button>
-      </c-dialog.footer>
-    </c-dialog.content>
-  </c-dialog>
-{% endif %}
 {% block hero %}
 <section class="relative h-[260px] md:h-[340px] overflow-hidden">
     <img

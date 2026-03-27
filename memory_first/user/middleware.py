@@ -7,35 +7,23 @@ from django.utils import timezone
 
 from memory.models import MemoryGameAttempt
 
-print("MIDDLEWARE MODULE LOADED", flush=True)
-
 logger = logging.getLogger(__name__)
+
 
 class MemoryGameReminderMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        print(
-            f"[memory-mw] path={request.path} auth={getattr(request.user, 'is_authenticated', None)}",
-            flush=True,
-        )
         excluded_prefixes = (
             "/accounts/",
             "/admin/",
         )
 
         if request.path.startswith(excluded_prefixes):
-            print("[memory-mw] skipped: excluded prefix", flush=True)
             return self.get_response(request)
-        is_patient = False
-        if request.user.is_authenticated:
-            try:
-                is_patient = request.user.is_patient()
-            except Exception as e:
-                print(f"[memory-mw] is_patient() failed: {e}", flush=True)
 
-        if request.user.is_authenticated and is_patient:
+        if request.user.is_authenticated and request.user.is_patient():
             excluded_paths = {
                 reverse("memory_game_page"),
                 reverse("family_memory_question"),
@@ -69,9 +57,14 @@ class MemoryGameReminderMiddleware:
                                 )
                             snoozed = timezone.now() < snooze_until
 
-                        if not snoozed and not request.session.get("memory_reminder_added", False):
-                            request.memory_reminder_text = "Don't forget to play the Memory Game today!"
-                            request.session["memory_reminder_added"] = True
+                        if not snoozed:
+                            messages.info(
+                                request,
+                                "Don't forget to play the Memory Game today!",
+                                extra_tags="memory_reminder",
+                                fail_silently=True,
+                            )
+
                 except Exception:
                     logger.exception(
                         "MemoryGameReminderMiddleware failed for path=%s user_id=%s",
@@ -79,5 +72,4 @@ class MemoryGameReminderMiddleware:
                         getattr(request.user, "pk", None),
                     )
 
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)
